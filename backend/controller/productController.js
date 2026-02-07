@@ -3,7 +3,6 @@ import handleError from "../utils/handleError.js";
 import handleAsyncError from '../middleware/handleAsyncError.js';
 import APIFunctionality from '../utils/apiFunctionality.js';
 
-// http://localhost:8000/api/v1/product/697f0c2db163600f6d8b1938?keyword=shirt 
 
 // Creating Products 
 
