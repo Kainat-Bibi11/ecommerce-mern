@@ -3,10 +3,12 @@ import product from './routes/productRoutes.js'
 import errorHandleMiddleware from './middleware/error.js'
 import user from './routes/userRoutes.js'
 const app = express();
+import cookieParser from 'cookie-parser'
 
 // middleware 
 
 app.use(express.json())
+app.use(cookieParser())
 
 // Route 
 app.use("/api/v1",product)
