@@ -76,4 +76,57 @@ export const getSingleProduct = handleAsyncError(async (req, res, next) => {
 
 })
 
+// Creating and Updating Review 
+
+export const createOrUpdateReviewForProduct = handleAsyncError(async (req, res, next) => {
+  const {rating , comment , productId} = req.body;
+  const review = {
+    user:req.user._id,
+    name:req.user.name,
+    rating:Number(rating),
+    comment
+  }
+  const product = await Product.findById(productId);
+  const reviewExist = product.reviews.find(review=>review.user.toString()===req.user.id.toString())
+  if(reviewExist){
+    product.reviews.forEach(review=>{
+        if(review.user.toString()===req.user.id.toString()){
+            review.rating = rating,
+            review.comment = comment
+        }
+    })
+  }else{
+   product.reviews.push(review);
+  }
+
+ product.numOfReviews = product.reviews.length
+
+  let sum = 0;
+  product.reviews.forEach(review=>{
+    sum+=review.rating 
+  })
+
+//   If we are not having any rating and if we are find the length of the array here we have zero and any number divided by zero we are going to have the error 
+
+// before calculating we are just going to check the condition 
+
+  product.ratings =product.reviews.length>0?sum/product.reviews.length:0
+
+  await product.save({validateBeforeSave:false})
+  res.status(200).json({
+    success:true,
+    product
+  })
+})
+
+// Admin Getting All Products 
+
+export const getAdminProducts = handleAsyncError(async(req,res,next)=>{
+    const products = await Product.find();
+    res.status(200).json({
+        success:true,
+        products
+    })
+})
+
 

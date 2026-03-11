@@ -76,7 +76,7 @@ export const requestPasswordReset = handleAsyncError(async (req, res, next) => {
       message
     })
     res.status(200).json({
-      success:true,
+      success: true,
       message: `Email is sent to ${user.email} successfully.`
     })
   } catch (error) {
@@ -90,72 +90,138 @@ export const requestPasswordReset = handleAsyncError(async (req, res, next) => {
 
 // Reset Password 
 
-export const resetPassword = handleAsyncError(async(req,res,next)=>{
+export const resetPassword = handleAsyncError(async (req, res, next) => {
 
   const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
   const user = await User.findOne({
     resetPasswordToken,
-    resetPasswordExpire: {$gt:Date.now()}
+    resetPasswordExpire: { $gt: Date.now() }
   })
-  if(!user){
-    return next(new handleError('Reset Password Token is Invalid or has been expired' , 400))
+  if (!user) {
+    return next(new handleError('Reset Password Token is Invalid or has been expired', 400))
   }
 
-  const {password , confirmPassword} = req.body;
-  if(password!==confirmPassword){
-    return next(new handleError("Password doesn't match" , 400))
+  const { password, confirmPassword } = req.body;
+  if (password !== confirmPassword) {
+    return next(new handleError("Password doesn't match", 400))
   }
   user.password = password;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
-  await  user.save()
-  sendToken(user,200,res)
+  await user.save()
+  sendToken(user, 200, res)
 })
 
 // Get User Details 
 
-export const getUserDetails = handleAsyncError(async(req,res,next)=>{
+export const getUserDetails = handleAsyncError(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   res.status(200).json({
-    success:true,
+    success: true,
     user
   })
 })
 
 // Update Password 
 
-export const updatePassword = handleAsyncError(async(req,res,next)=>{
-  const {oldPassword, newPassword, confirmPassword} = req.body;
+export const updatePassword = handleAsyncError(async (req, res, next) => {
+  const { oldPassword, newPassword, confirmPassword } = req.body;
   const user = await User.findById(req.user.id).select('+password');
   const checkPasswordMatch = await user.verifyPassword(oldPassword);
-  if(!checkPasswordMatch){
-    return next(new handleError('Old password is incorrect' , 400));
+  if (!checkPasswordMatch) {
+    return next(new handleError('Old password is incorrect', 400));
   }
-  if(newPassword!==confirmPassword){
-    return next(new handleError("Password does'nt match" , 400));
+  if (newPassword !== confirmPassword) {
+    return next(new handleError("Password does'nt match", 400));
   }
   user.password = newPassword;
   await user.save()
-  sendToken(user,200,res)
+  sendToken(user, 200, res)
 
 })
 
 // Updating User Profile 
 
-export const updateProfile = handleAsyncError(async(req,res,next)=>{
-    const {name,email} = req.body;
-    const updateUserDetails = {
-      name,
-      email
-    }
-    const user = await User.findByIdAndUpdate(req.user.id,updateUserDetails,{
-      new:true,
-      runValidators:true
-    })
-    res.status(200).json({
-      success:true,
-      message:"Profile updated successfully",
-      user
-    })
+export const updateProfile = handleAsyncError(async (req, res, next) => {
+  const { name, email } = req.body;
+  const updateUserDetails = {
+    name,
+    email
+  }
+  const user = await User.findByIdAndUpdate(req.user.id, updateUserDetails, {
+    new: true,
+    runValidators: true
+  })
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    user
+  })
 })
+
+//Admin - Getting User Information 
+
+export const getUsersList = handleAsyncError(async (req, res, next) => {
+  const users = await User.find();
+  res.status(200).json({
+    success: true,
+    users
+  })
+})
+
+// Admin - Getting Single User Information 
+
+export const getSingleUser = handleAsyncError(async (req, res, next) => {
+ const user = await User.findById(req.params.id);
+ if(!user){
+  return next(new handleError(`User doesn't exist with this id:${req.params.id}` , 400))
+ }
+ res.status(200).json({
+  success:true,
+  user
+ })
+})
+
+// Admin - Changing User Role 
+
+export const updateUserRole = handleAsyncError(async (req, res, next) => {
+  const {role} = req.body;
+  const newUserData = {
+    role
+  }
+  const user = await User.findByIdAndUpdate(req.params.id,newUserData,{
+    new:true,
+    runValidators:true
+  })
+  if(!user){
+    return next(new handleError("User doesn't exist", 400))
+  }
+  res.status(200).json({
+    success:true,
+    user
+   })
+ })
+
+//  Admin - Delete User Profile 
+
+export const deleteUser = handleAsyncError(async (req, res, next) => {
+ const user = await User.findById(req.params.id);
+ if(!user){
+  return next(new handleError("User doesn't exist", 400));
+ }
+  await User.findByIdAndDelete(req.params.id);
+  res.status(200).json({
+    success:true,
+    message:"User Deleted Successfully"
+  })
+ })
+
+
+
+
+
+
+
+
+
