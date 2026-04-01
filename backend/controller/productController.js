@@ -87,6 +87,9 @@ export const createOrUpdateReviewForProduct = handleAsyncError(async (req, res, 
     comment
   }
   const product = await Product.findById(productId);
+  if(!product){
+    return next(new handleError("Product not found" , 400))
+  }
   const reviewExist = product.reviews.find(review=>review.user.toString()===req.user.id.toString())
   if(reviewExist){
     product.reviews.forEach(review=>{
@@ -116,6 +119,48 @@ export const createOrUpdateReviewForProduct = handleAsyncError(async (req, res, 
   res.status(200).json({
     success:true,
     product
+  })
+})
+
+// Getting Reviews 
+
+export const getProductReview = handleAsyncError(async(req,res,next)=>{
+  const product = await Product.findById(req.query.id);
+  if(!product){
+    return next(new handleError("Product not found" , 400))
+  }
+  res.status(200).json({
+    success:true,
+    reviews:product.reviews
+  })
+})
+
+// Deleting Product Review 
+
+export const deleteReview = handleAsyncError(async(req,res,next)=>{
+ const product = await Product.findById(req.query.productId);
+ if(!product){
+    return next(new handleError("Product not found" , 400))
+  }
+  const reviews = product.reviews.filter(review=> review._id.toString() !== req.query.id.toString())
+  let sum = 0;
+  reviews.forEach(review=>{
+    sum+=review.rating
+  })
+  const ratings = reviews.length>0?sum/reviews.length:0;
+  const numOfReviews = reviews.length;
+
+  await Product.findByIdAndUpdate(req.query.productId,{
+    reviews,
+    ratings,
+    numOfReviews
+  },{
+    new:true,
+    runValidators:true
+  })
+  res.status(200).json({
+    success:true,
+    message:"Review Deleted Successfully"
   })
 })
 
